@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "transaction")
+@Table(name = "transactions")
 public class Transaction {
 
     @Id
@@ -20,20 +20,21 @@ public class Transaction {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "transaction_name")
-    private String transactionName;
+    @Column(name = "description")
+    private String description;
 
-    @Column(name = "transaction_amount")
-    private double transactionAmount;
+    @Column(name = "transaction_amount", nullable = false)
+    private double amount;
 
-    @Column(name = "transaction_date")
-    private LocalDate transactionDate;
-
-    @Column(name = "transaction_type")
-    private String transactionType;
+    @Column(name = "transaction_date", nullable = false)
+    private LocalDate date;
 
     public Integer getId() {
         return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public TransactionCategory getTransactionCategory() {
@@ -52,35 +53,27 @@ public class Transaction {
         this.user = user;
     }
 
-    public String getTransactionName() {
-        return transactionName;
+    public String getDescription() {
+        return description;
     }
 
-    public void setTransactionName(String transactionName) {
-        this.transactionName = transactionName;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public double getTransactionAmount() {
-        return transactionAmount;
+    public double getAmount() {
+        return amount;
     }
 
-    public void setTransactionAmount(double transactionAmount) {
-        this.transactionAmount = transactionAmount;
+    public void setAmount(double amount) {
+        this.amount = amount;
     }
 
-    public LocalDate getTransactionDate() {
-        return transactionDate;
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setTransactionDate(LocalDate transactionDate) {
-        this.transactionDate = transactionDate;
-    }
-
-    public String getTransactionType() {
-        return transactionType;
-    }
-
-    public void setTransactionType(String transactionType) {
-        this.transactionType = transactionType;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 }

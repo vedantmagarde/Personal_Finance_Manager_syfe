@@ -1,168 +1,71 @@
 package com.example.personalfinancemanager.controllers;
 
-import com.example.personalfinancemanager.entities.Transaction;
+import com.example.personalfinancemanager.dtos.TransactionListResponse;
+import com.example.personalfinancemanager.dtos.TransactionRequest;
+import com.example.personalfinancemanager.dtos.TransactionResponse;
+import com.example.personalfinancemanager.dtos.TransactionUpdateRequest;
+import com.example.personalfinancemanager.security.CustomUserDetails;
 import com.example.personalfinancemanager.services.TransactionService;
-
-import org.slf4j.LoggerFactory;
-
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/transaction")
+@RequestMapping("/api/transactions")
 public class TransactionController {
 
-    private static final Logger logger = Logger.getLogger(TransactionController.class.getName());
-
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(TransactionController.class);
+    private final TransactionService transactionService;
 
     @Autowired
-    private TransactionService transactionService;
-
-    // GET ALL TRANSACTIONS
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Transaction>> getAllTransactionsByUserIdAndYearOrMonth(
-            @PathVariable int userId,
-            @RequestParam int year,
-            @RequestParam(required = false) Integer month) {
-
-        logger.info(
-                "Getting all transactions with userId: "
-                        + userId
-                        + " @"
-                        + year);
-
-        List<Transaction> transactionsList;
-
-        if (month == null) {
-
-            transactionsList = transactionService
-                    .getAllTransactionsByUserIdAndYear(
-                            userId,
-                            year);
-
-        } else {
-
-            transactionsList = transactionService
-                    .getAllTransactionsByUserIdAndYearAndMonth(
-                            userId,
-                            year,
-                            month);
-        }
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(transactionsList);
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
-    // GET RECENT TRANSACTIONS
-    @GetMapping("/recent/user/{userId}")
-    public ResponseEntity<List<Transaction>> getRecentTransactionsByUserId(
-            @PathVariable int userId,
-            @RequestParam int startPage,
-            @RequestParam int endPage,
-            @RequestParam int size) {
-
-        logger.info(
-                "Getting transactions for userId: "
-                        + userId
-                        + ", Page: ("
-                        + startPage
-                        + ","
-                        + endPage
-                        + ")");
-
-        List<Transaction> recentTransactionList = transactionService.getRecentTransactionsByUserId(
-                userId,
-                startPage,
-                endPage,
-                size);
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(recentTransactionList);
-    }
-
-    // GET DISTINCT YEARS
-    @GetMapping("/user/{userId}/years")
-    public ResponseEntity<List<Integer>> getDistinctTransactionYears(
-            @PathVariable int userId) {
-
-        logger.info(
-                "Getting distinct years for user: "
-                        + userId);
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(
-                        transactionService
-                                .getDistinctTransactionYears(userId));
-    }
-
-    // CREATE TRANSACTION
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(
-            @RequestBody Transaction transaction) {
-
-        logger.info("Creating Transaction");
-
-        Transaction newTransaction = transactionService.createTransaction(transaction);
-
-        if (newTransaction == null) {
-
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .build();
-        }
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(newTransaction);
+    public ResponseEntity<TransactionResponse> createTransaction(
+            @Valid @RequestBody TransactionRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        
+        TransactionResponse response = transactionService.createTransaction(request, userDetails.getUser());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // UPDATE TRANSACTION
-    @PutMapping
-    public ResponseEntity<Transaction> updateTransaction(
-            @RequestBody Transaction transaction) {
-
-        logger.info(
-                "Updating transaction with id: "
-                        + transaction.getId());
-
-        Transaction updatedTransaction = transactionService.updateTransaction(transaction);
-
-        if (updatedTransaction == null) {
-
-            return ResponseEntity
-                    .status(HttpStatus.NO_CONTENT)
-                    .build();
-        }
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(updatedTransaction);
+    @GetMapping
+    public ResponseEntity<TransactionListResponse> getTransactions(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Integer categoryId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        
+        List<TransactionResponse> transactions = transactionService.getTransactions(userDetails.getUser(), startDate, endDate, categoryId);
+        return ResponseEntity.ok(new TransactionListResponse(transactions));
     }
 
-    // DELETE TRANSACTION
-    @DeleteMapping("/{transactionId}")
-    public ResponseEntity<Transaction> deleteTransactionById(
-            @PathVariable int transactionId) {
+    @PutMapping("/{id}")
+    public ResponseEntity<TransactionResponse> updateTransaction(
+            @PathVariable Integer id,
+            @Valid @RequestBody TransactionUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        
+        TransactionResponse response = transactionService.updateTransaction(id, request, userDetails.getUser());
+        return ResponseEntity.ok(response);
+    }
 
-        logger.info(
-                "Delete transaction with id: "
-                        + transactionId);
-
-        transactionService.deleteTransactionById(transactionId);
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .build();
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> deleteTransaction(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        
+        transactionService.deleteTransaction(id, userDetails.getUser());
+        return ResponseEntity.ok(Collections.singletonMap("message", "Transaction deleted successfully"));
     }
 }

@@ -1,62 +1,46 @@
 package com.example.personalfinancemanager.services;
 
+import com.example.personalfinancemanager.dtos.UserRegistrationRequest;
 import com.example.personalfinancemanager.entities.User;
-
+import com.example.personalfinancemanager.exceptions.ConflictException;
 import com.example.personalfinancemanager.repositories.UserRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-
 import java.util.Optional;
-
-import java.util.logging.Logger;
 
 @Service
 public class UserService {
 
-    private static final Logger logger = Logger.getLogger(UserService.class.getName());
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    private UserRepository userRepository;
-
-    // GET
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public Optional<User> getUserById(int userId) {
-
-        logger.info(
-                "Getting the user by id: "
-                        + userId);
-
         return userRepository.findById(userId);
     }
 
     public Optional<User> getUserByEmail(String email) {
-
-        logger.info(
-                "Getting the user by email: "
-                        + email);
-
         return userRepository.findByEmail(email);
     }
 
-    // POST
-
-    public User createUser(
-            String name,
-            String username,
-            String password) {
+    public User registerUser(UserRegistrationRequest request) {
+        if (userRepository.findByEmail(request.getUsername()).isPresent()) {
+            throw new ConflictException("Username (email) is already registered");
+        }
 
         User user = new User();
-
-        user.setName(name);
-
-        user.setEmail(username);
-
-        user.setPassword(password);
-
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
         user.setCreatedAt(LocalDateTime.now());
 
         return userRepository.save(user);

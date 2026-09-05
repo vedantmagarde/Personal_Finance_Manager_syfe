@@ -17,11 +17,18 @@ public class TransactionCategory {
     @Column(name = "category_name")
     private String categoryName;
 
-    @Column(name = "category_color")
-    private String categoryColor;
+    @Column(name = "category_type", nullable = false)
+    private String type; // e.g., "INCOME" or "EXPENSE"
+
+    @Column(name = "is_custom", nullable = false)
+    private boolean isCustom = true; // default true for user created
 
     public Integer getId() {
         return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public User getUser() {
@@ -40,11 +47,19 @@ public class TransactionCategory {
         this.categoryName = categoryName;
     }
 
-    public String getCategoryColor() {
-        return categoryColor;
+    public String getType() {
+        return type;
     }
 
-    public void setCategoryColor(String categoryColor) {
-        this.categoryColor = categoryColor;
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public boolean isCustom() {
+        return isCustom;
+    }
+
+    public void setCustom(boolean custom) {
+        isCustom = custom;
     }
 }

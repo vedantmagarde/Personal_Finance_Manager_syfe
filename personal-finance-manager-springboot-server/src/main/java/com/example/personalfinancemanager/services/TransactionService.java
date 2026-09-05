@@ -1,165 +1,96 @@
 package com.example.personalfinancemanager.services;
 
+import com.example.personalfinancemanager.dtos.TransactionRequest;
+import com.example.personalfinancemanager.dtos.TransactionResponse;
+import com.example.personalfinancemanager.dtos.TransactionUpdateRequest;
 import com.example.personalfinancemanager.entities.Transaction;
 import com.example.personalfinancemanager.entities.TransactionCategory;
 import com.example.personalfinancemanager.entities.User;
-
+import com.example.personalfinancemanager.exceptions.ResourceNotFoundException;
 import com.example.personalfinancemanager.repositories.TransactionCategoryRepository;
 import com.example.personalfinancemanager.repositories.TransactionRepository;
-import com.example.personalfinancemanager.repositories.UserRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
 
-        private static final Logger logger = Logger.getLogger(TransactionService.class.getName());
+    private final TransactionRepository transactionRepository;
+    private final TransactionCategoryRepository transactionCategoryRepository;
 
-        @Autowired
-        private TransactionRepository transactionRepository;
+    @Autowired
+    public TransactionService(TransactionRepository transactionRepository,
+                              TransactionCategoryRepository transactionCategoryRepository) {
+        this.transactionRepository = transactionRepository;
+        this.transactionCategoryRepository = transactionCategoryRepository;
+    }
 
-        @Autowired
-        private TransactionCategoryRepository transactionCategoryRepository;
+    public TransactionResponse createTransaction(TransactionRequest request, User user) {
+        TransactionCategory category = transactionCategoryRepository.findByNameForUser(request.getCategory(), user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found or not accessible"));
 
-        @Autowired
-        private UserRepository userRepository;
+        Transaction transaction = new Transaction();
+        transaction.setAmount(request.getAmount());
+        transaction.setDate(request.getDate());
+        transaction.setDescription(request.getDescription());
+        transaction.setTransactionCategory(category);
+        transaction.setUser(user);
 
-        public List<Transaction> getRecentTransactionsByUserId(
-                        int userId,
-                        int startPage,
-                        int endPage,
-                        int size) {
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        return mapToResponse(savedTransaction);
+    }
 
-                logger.info("Getting the most recent transactions for user: " + userId);
+    public List<TransactionResponse> getTransactions(User user, LocalDate startDate, LocalDate endDate, Integer categoryId) {
+        List<Transaction> transactions = transactionRepository.findFilteredTransactions(user.getId(), startDate, endDate, categoryId);
+        return transactions.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
 
-                List<Transaction> combinedResults = new ArrayList<>();
+    public TransactionResponse updateTransaction(Integer id, TransactionUpdateRequest request, User user) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-                for (int page = startPage; page <= endPage; page++) {
-                        Pageable pageable = PageRequest.of(page, size);
-
-                        List<Transaction> pageResults = transactionRepository.findAllByUserIdOrderByTransactionDateDesc(
-                                        userId,
-                                        pageable);
-
-                        combinedResults.addAll(pageResults);
-                }
-
-                return combinedResults;
+        if (!transaction.getUser().getId().equals(user.getId())) {
+            throw new ResourceNotFoundException("Transaction not found");
         }
 
-        public List<Transaction> getAllTransactionsByUserIdAndYear(
-                        int userId,
-                        int year) {
+        TransactionCategory category = transactionCategoryRepository.findByNameForUser(request.getCategory(), user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found or not accessible"));
 
-                logger.info("Getting all transaction in year: " + year + " for user: " + userId);
+        transaction.setAmount(request.getAmount());
+        transaction.setDescription(request.getDescription());
+        transaction.setTransactionCategory(category);
 
-                LocalDate startDate = LocalDate.of(year, 1, 1);
-                LocalDate endDate = LocalDate.of(year, 12, 31);
+        Transaction updatedTransaction = transactionRepository.save(transaction);
+        return mapToResponse(updatedTransaction);
+    }
 
-                return transactionRepository
-                                .findAllByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(
-                                                userId,
-                                                startDate,
-                                                endDate);
+    public void deleteTransaction(Integer id, User user) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+        if (!transaction.getUser().getId().equals(user.getId())) {
+            throw new ResourceNotFoundException("Transaction not found");
         }
 
-        public List<Transaction> getAllTransactionsByUserIdAndYearAndMonth(
-                        int userId,
-                        int year,
-                        int month) {
+        transactionRepository.delete(transaction);
+    }
 
-                logger.info(
-                                "Getting all transaction in month: "
-                                                + month
-                                                + " and in year: "
-                                                + year
-                                                + " for user: "
-                                                + userId);
-
-                LocalDate startDate = LocalDate.of(year, month, 1);
-                LocalDate endDate = LocalDate.of(
-                                year,
-                                month,
-                                YearMonth.of(year, month).lengthOfMonth());
-
-                return transactionRepository
-                                .findAllByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(
-                                                userId,
-                                                startDate,
-                                                endDate);
+    private TransactionResponse mapToResponse(Transaction transaction) {
+        TransactionResponse response = new TransactionResponse();
+        response.setId(transaction.getId());
+        response.setAmount(transaction.getAmount());
+        response.setDate(transaction.getDate());
+        response.setDescription(transaction.getDescription());
+        
+        if (transaction.getTransactionCategory() != null) {
+            response.setCategory(transaction.getTransactionCategory().getCategoryName());
+            response.setType(transaction.getTransactionCategory().getType());
         }
-
-        public List<Integer> getDistinctTransactionYears(int userId) {
-
-                logger.info("Getting distinct transaction years for user: " + userId);
-
-                return transactionRepository.findDistinctYearsByUserId(userId);
-        }
-
-        public Transaction createTransaction(Transaction transaction) {
-
-                logger.info("Creating Transaction");
-
-                Optional<TransactionCategory> transactionCategoryOptional = Optional.empty();
-
-                if (transaction.getTransactionCategory() != null) {
-                        transactionCategoryOptional = transactionCategoryRepository.findById(
-                                        transaction.getTransactionCategory().getId());
-                }
-
-                User user = userRepository
-                                .findById(transaction.getUser().getId())
-                                .get();
-
-                Transaction newTransaction = new Transaction();
-
-                newTransaction.setTransactionCategory(
-                                transactionCategoryOptional.isEmpty()
-                                                ? null
-                                                : transactionCategoryOptional.get());
-
-                newTransaction.setUser(user);
-                newTransaction.setTransactionName(transaction.getTransactionName());
-                newTransaction.setTransactionAmount(transaction.getTransactionAmount());
-                newTransaction.setTransactionDate(transaction.getTransactionDate());
-                newTransaction.setTransactionType(transaction.getTransactionType());
-
-                return transactionRepository.save(newTransaction);
-        }
-
-        public Transaction updateTransaction(Transaction transaction) {
-
-                logger.info("Updating transaction with id: " + transaction.getId());
-
-                Optional<Transaction> transactionOptional = transactionRepository.findById(transaction.getId());
-
-                if (transactionOptional.isEmpty()) {
-                        return null;
-                }
-
-                return transactionRepository.save(transaction);
-        }
-
-        public void deleteTransactionById(int transactionId) {
-
-                logger.info("Deleting transaction with id: " + transactionId);
-
-                Optional<Transaction> transactionOptional = transactionRepository.findById(transactionId);
-
-                if (transactionOptional.isEmpty()) {
-                        return;
-                }
-
-                transactionRepository.delete(transactionOptional.get());
-        }
+        
+        return response;
+    }
 }
