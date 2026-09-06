@@ -6,15 +6,12 @@ public class SavingsGoalResponse {
 
     private Integer id;
     private String goalName;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Double targetAmount;
+    private java.math.BigDecimal targetAmount;
     private LocalDate targetDate;
     private LocalDate startDate;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Double currentProgress;
+    private java.math.BigDecimal currentProgress;
     private Double progressPercentage;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Double remainingAmount;
+    private java.math.BigDecimal remainingAmount;
 
     public SavingsGoalResponse() {
     }
@@ -23,21 +20,21 @@ public class SavingsGoalResponse {
                                LocalDate targetDate, LocalDate startDate, Double currentProgress) {
         this.id = id;
         this.goalName = goalName;
-        this.targetAmount = targetAmount;
+        this.targetAmount = targetAmount != null ? java.math.BigDecimal.valueOf(targetAmount).setScale(2, java.math.RoundingMode.HALF_UP) : null;
         this.targetDate = targetDate;
         this.startDate = startDate;
-        this.currentProgress = currentProgress != null ? currentProgress : 0.0;
         
-        this.progressPercentage = targetAmount > 0
-                ? Math.min(100.0, (this.currentProgress / targetAmount) * 100.0)
+        Double progress = currentProgress != null ? currentProgress : 0.0;
+        this.currentProgress = java.math.BigDecimal.valueOf(progress).setScale(2, java.math.RoundingMode.HALF_UP);
+        
+        this.progressPercentage = targetAmount != null && targetAmount > 0
+                ? Math.min(100.0, (progress / targetAmount) * 100.0)
                 : 0.0;
-        // Format to 2 decimal places manually to match tests if needed, but Double is fine.
         this.progressPercentage = Math.round(this.progressPercentage * 100.0) / 100.0;
 
-        this.remainingAmount = targetAmount - this.currentProgress;
-        if (this.remainingAmount < 0) {
-            this.remainingAmount = 0.0;
-        }
+        Double remaining = (targetAmount != null ? targetAmount : 0.0) - progress;
+        if (remaining < 0) remaining = 0.0;
+        this.remainingAmount = java.math.BigDecimal.valueOf(remaining).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     public Integer getId() {
@@ -56,12 +53,12 @@ public class SavingsGoalResponse {
         this.goalName = goalName;
     }
 
-    public Double getTargetAmount() {
+    public java.math.BigDecimal getTargetAmount() {
         return targetAmount;
     }
 
     public void setTargetAmount(Double targetAmount) {
-        this.targetAmount = targetAmount;
+        this.targetAmount = targetAmount != null ? java.math.BigDecimal.valueOf(targetAmount).setScale(2, java.math.RoundingMode.HALF_UP) : null;
     }
 
     public LocalDate getTargetDate() {
@@ -80,12 +77,12 @@ public class SavingsGoalResponse {
         this.startDate = startDate;
     }
 
-    public Double getCurrentProgress() {
+    public java.math.BigDecimal getCurrentProgress() {
         return currentProgress;
     }
 
     public void setCurrentProgress(Double currentProgress) {
-        this.currentProgress = currentProgress;
+        this.currentProgress = currentProgress != null ? java.math.BigDecimal.valueOf(currentProgress).setScale(2, java.math.RoundingMode.HALF_UP) : null;
     }
 
     public Double getProgressPercentage() {
@@ -96,11 +93,11 @@ public class SavingsGoalResponse {
         this.progressPercentage = progressPercentage;
     }
 
-    public Double getRemainingAmount() {
+    public java.math.BigDecimal getRemainingAmount() {
         return remainingAmount;
     }
 
     public void setRemainingAmount(Double remainingAmount) {
-        this.remainingAmount = remainingAmount;
+        this.remainingAmount = remainingAmount != null ? java.math.BigDecimal.valueOf(remainingAmount).setScale(2, java.math.RoundingMode.HALF_UP) : null;
     }
 }

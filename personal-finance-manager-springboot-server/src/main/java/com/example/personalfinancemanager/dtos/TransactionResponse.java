@@ -5,8 +5,7 @@ import java.time.LocalDate;
 public class TransactionResponse {
 
     private Integer id;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Double amount;
+    private java.math.BigDecimal amount;
     private LocalDate date;
     private String category;
     private String description;
@@ -17,7 +16,7 @@ public class TransactionResponse {
 
     public TransactionResponse(Integer id, Double amount, LocalDate date, String category, String description, String type) {
         this.id = id;
-        this.amount = amount;
+        this.amount = amount != null ? java.math.BigDecimal.valueOf(amount).setScale(2, java.math.RoundingMode.HALF_UP) : null;
         this.date = date;
         this.category = category;
         this.description = description;
@@ -32,12 +31,12 @@ public class TransactionResponse {
         this.id = id;
     }
 
-    public Double getAmount() {
+    public java.math.BigDecimal getAmount() {
         return amount;
     }
 
     public void setAmount(Double amount) {
-        this.amount = amount;
+        this.amount = amount != null ? java.math.BigDecimal.valueOf(amount).setScale(2, java.math.RoundingMode.HALF_UP) : null;
     }
 
     public LocalDate getDate() {

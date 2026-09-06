@@ -6,12 +6,9 @@ public class MonthlyReportResponse {
 
     private Integer month;
     private Integer year;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(contentUsing = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Map<String, Double> totalIncome;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(contentUsing = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Map<String, Double> totalExpenses;
-    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
-    private Double netSavings;
+    private java.util.Map<String, java.math.BigDecimal> totalIncome;
+    private java.util.Map<String, java.math.BigDecimal> totalExpenses;
+    private java.math.BigDecimal netSavings;
 
     public MonthlyReportResponse() {
     }
@@ -20,9 +17,22 @@ public class MonthlyReportResponse {
                                  Map<String, Double> totalExpenses, Double netSavings) {
         this.month = month;
         this.year = year;
-        this.totalIncome = totalIncome;
-        this.totalExpenses = totalExpenses;
-        this.netSavings = netSavings;
+        
+        this.totalIncome = new java.util.HashMap<>();
+        if (totalIncome != null) {
+            for (Map.Entry<String, Double> entry : totalIncome.entrySet()) {
+                this.totalIncome.put(entry.getKey(), java.math.BigDecimal.valueOf(entry.getValue()).setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+        }
+        
+        this.totalExpenses = new java.util.HashMap<>();
+        if (totalExpenses != null) {
+            for (Map.Entry<String, Double> entry : totalExpenses.entrySet()) {
+                this.totalExpenses.put(entry.getKey(), java.math.BigDecimal.valueOf(entry.getValue()).setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+        }
+        
+        this.netSavings = netSavings != null ? java.math.BigDecimal.valueOf(netSavings).setScale(2, java.math.RoundingMode.HALF_UP) : null;
     }
 
     public Integer getMonth() { return month; }
@@ -31,12 +41,12 @@ public class MonthlyReportResponse {
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
 
-    public Map<String, Double> getTotalIncome() { return totalIncome; }
-    public void setTotalIncome(Map<String, Double> totalIncome) { this.totalIncome = totalIncome; }
+    public java.util.Map<String, java.math.BigDecimal> getTotalIncome() { return totalIncome; }
+    public void setTotalIncome(java.util.Map<String, java.math.BigDecimal> totalIncome) { this.totalIncome = totalIncome; }
 
-    public Map<String, Double> getTotalExpenses() { return totalExpenses; }
-    public void setTotalExpenses(Map<String, Double> totalExpenses) { this.totalExpenses = totalExpenses; }
+    public java.util.Map<String, java.math.BigDecimal> getTotalExpenses() { return totalExpenses; }
+    public void setTotalExpenses(java.util.Map<String, java.math.BigDecimal> totalExpenses) { this.totalExpenses = totalExpenses; }
 
-    public Double getNetSavings() { return netSavings; }
-    public void setNetSavings(Double netSavings) { this.netSavings = netSavings; }
+    public java.math.BigDecimal getNetSavings() { return netSavings; }
+    public void setNetSavings(Double netSavings) { this.netSavings = netSavings != null ? java.math.BigDecimal.valueOf(netSavings).setScale(2, java.math.RoundingMode.HALF_UP) : null; }
 }
