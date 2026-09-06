@@ -44,8 +44,8 @@ public class TransactionService {
         return mapToResponse(savedTransaction);
     }
 
-    public List<TransactionResponse> getTransactions(User user, LocalDate startDate, LocalDate endDate, Integer categoryId) {
-        List<Transaction> transactions = transactionRepository.findFilteredTransactions(user.getId(), startDate, endDate, categoryId);
+    public List<TransactionResponse> getTransactions(User user, LocalDate startDate, LocalDate endDate, String category) {
+        List<Transaction> transactions = transactionRepository.findFilteredTransactions(user.getId(), startDate, endDate, category);
         return transactions.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 

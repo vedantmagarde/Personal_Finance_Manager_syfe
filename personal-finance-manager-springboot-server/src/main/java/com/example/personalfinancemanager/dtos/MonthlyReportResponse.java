@@ -32,7 +32,9 @@ public class MonthlyReportResponse {
             }
         }
         
-        this.netSavings = netSavings != null ? java.math.BigDecimal.valueOf(netSavings).setScale(2, java.math.RoundingMode.HALF_UP) : null;
+        this.netSavings = netSavings != null
+                ? (netSavings == 0.0 ? java.math.BigDecimal.ZERO : java.math.BigDecimal.valueOf(netSavings).setScale(2, java.math.RoundingMode.HALF_UP))
+                : null;
     }
 
     public Integer getMonth() { return month; }

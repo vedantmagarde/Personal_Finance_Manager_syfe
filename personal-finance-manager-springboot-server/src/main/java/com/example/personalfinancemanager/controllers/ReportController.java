@@ -26,6 +26,12 @@ public class ReportController {
             @PathVariable Integer month,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("Invalid month: " + month + ". Month must be between 1 and 12.");
+        }
+        if (year < 1) {
+            throw new IllegalArgumentException("Invalid year: " + year);
+        }
         MonthlyReportResponse report = reportService.getMonthlyReport(userDetails.getUser(), year, month);
         return ResponseEntity.ok(report);
     }

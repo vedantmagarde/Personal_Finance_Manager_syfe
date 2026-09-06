@@ -43,10 +43,10 @@ public class TransactionController {
     public ResponseEntity<TransactionListResponse> getTransactions(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) String category,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         
-        List<TransactionResponse> transactions = transactionService.getTransactions(userDetails.getUser(), startDate, endDate, categoryId);
+        List<TransactionResponse> transactions = transactionService.getTransactions(userDetails.getUser(), startDate, endDate, category);
         return ResponseEntity.ok(new TransactionListResponse(transactions));
     }
 

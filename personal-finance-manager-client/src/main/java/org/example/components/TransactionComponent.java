@@ -19,7 +19,8 @@ import org.example.utils.SqlUtil;
 public class TransactionComponent extends HBox {
 
         private Label transactionCategoryLabel;
-        private Label transactionNameLabel;
+        private Label 
+        ;
         private Label transactionDateLabel;
         private Label transactionAmountLabel;
 

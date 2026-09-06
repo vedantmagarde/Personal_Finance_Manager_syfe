@@ -25,7 +25,9 @@ public class SavingsGoalResponse {
         this.startDate = startDate;
         
         Double progress = currentProgress != null ? currentProgress : 0.0;
-        this.currentProgress = java.math.BigDecimal.valueOf(progress).setScale(2, java.math.RoundingMode.HALF_UP);
+        this.currentProgress = (progress == 0.0)
+                ? java.math.BigDecimal.ZERO
+                : java.math.BigDecimal.valueOf(progress).setScale(2, java.math.RoundingMode.HALF_UP);
         
         this.progressPercentage = targetAmount != null && targetAmount > 0
                 ? Math.min(100.0, (progress / targetAmount) * 100.0)
@@ -34,7 +36,9 @@ public class SavingsGoalResponse {
 
         Double remaining = (targetAmount != null ? targetAmount : 0.0) - progress;
         if (remaining < 0) remaining = 0.0;
-        this.remainingAmount = java.math.BigDecimal.valueOf(remaining).setScale(2, java.math.RoundingMode.HALF_UP);
+        this.remainingAmount = (remaining == 0.0)
+                ? java.math.BigDecimal.ZERO
+                : java.math.BigDecimal.valueOf(remaining).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     public Integer getId() {
