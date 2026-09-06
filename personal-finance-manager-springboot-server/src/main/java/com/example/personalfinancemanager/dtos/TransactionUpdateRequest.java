@@ -6,11 +6,9 @@ import jakarta.validation.constraints.Positive;
 
 public class TransactionUpdateRequest {
 
-    @NotNull(message = "Amount cannot be null")
     @Positive(message = "Amount must be a positive decimal value")
     private Double amount;
 
-    @NotBlank(message = "Category cannot be blank")
     private String category;
 
     private String description;

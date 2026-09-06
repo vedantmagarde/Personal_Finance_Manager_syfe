@@ -57,12 +57,19 @@ public class TransactionService {
             throw new ResourceNotFoundException("Transaction not found");
         }
 
-        TransactionCategory category = transactionCategoryRepository.findByNameForUser(request.getCategory(), user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found or not accessible"));
+        if (request.getCategory() != null) {
+            TransactionCategory category = transactionCategoryRepository.findByNameForUser(request.getCategory(), user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found or not accessible"));
+            transaction.setTransactionCategory(category);
+        }
 
-        transaction.setAmount(request.getAmount());
-        transaction.setDescription(request.getDescription());
-        transaction.setTransactionCategory(category);
+        if (request.getAmount() != null) {
+            transaction.setAmount(request.getAmount());
+        }
+        
+        if (request.getDescription() != null) {
+            transaction.setDescription(request.getDescription());
+        }
 
         Transaction updatedTransaction = transactionRepository.save(transaction);
         return mapToResponse(updatedTransaction);
