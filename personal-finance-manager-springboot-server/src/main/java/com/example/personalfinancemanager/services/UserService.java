@@ -1,5 +1,7 @@
 package com.example.personalfinancemanager.services;
 
+import com.example.personalfinancemanager.dtos.UserProfileResponse;
+import com.example.personalfinancemanager.dtos.UserProfileUpdateRequest;
 import com.example.personalfinancemanager.dtos.UserRegistrationRequest;
 import com.example.personalfinancemanager.entities.User;
 import com.example.personalfinancemanager.exceptions.ConflictException;
@@ -44,5 +46,30 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
 
         return userRepository.save(user);
+    }
+
+    public UserProfileResponse getProfile(User user) {
+        return new UserProfileResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getCreatedAt()
+        );
+    }
+
+    public UserProfileResponse updateProfile(User user, UserProfileUpdateRequest request) {
+        user.setFullName(request.getFullName());
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+        User saved = userRepository.save(user);
+        return new UserProfileResponse(
+                saved.getId(),
+                saved.getFullName(),
+                saved.getEmail(),
+                saved.getPhoneNumber(),
+                saved.getCreatedAt()
+        );
     }
 }
