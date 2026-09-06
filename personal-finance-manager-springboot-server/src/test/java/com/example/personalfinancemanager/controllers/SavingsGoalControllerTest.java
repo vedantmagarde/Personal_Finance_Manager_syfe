@@ -5,6 +5,8 @@ import com.example.personalfinancemanager.dtos.SavingsGoalUpdateRequest;
 import com.example.personalfinancemanager.dtos.UserLoginRequest;
 import com.example.personalfinancemanager.dtos.UserRegistrationRequest;
 import com.example.personalfinancemanager.repositories.SavingsGoalRepository;
+import com.example.personalfinancemanager.repositories.TransactionCategoryRepository;
+import com.example.personalfinancemanager.repositories.TransactionRepository;
 import com.example.personalfinancemanager.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,10 +41,18 @@ public class SavingsGoalControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private TransactionCategoryRepository transactionCategoryRepository;
+
     private MockHttpSession session;
 
     @BeforeEach
     public void setup() throws Exception {
+        transactionRepository.deleteAll();
+        transactionCategoryRepository.deleteAll();
         savingsGoalRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -77,23 +87,25 @@ public class SavingsGoalControllerTest {
         req.setGoalName(name);
         req.setTargetAmount(target);
         req.setTargetDate(LocalDate.now().plusMonths(6));
+        req.setStartDate(LocalDate.now());
         return req;
     }
 
     @Test
     public void testCreateGoal_Success() throws Exception {
-        SavingsGoalRequest request = buildGoalRequest("Emergency Fund", 50000.0);
+        SavingsGoalRequest request = buildGoalRequest("Emergency Fund", 5000.0);
 
-        mockMvc.perform(post("/api/savings-goals")
+        mockMvc.perform(post("/api/goals")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.goalName").value("Emergency Fund"))
-                .andExpect(jsonPath("$.targetAmount").value(50000.0))
-                .andExpect(jsonPath("$.currentAmount").value(0.0))
-                .andExpect(jsonPath("$.progressPercent").value(0.0));
+                .andExpect(jsonPath("$.targetAmount").value(5000.0))
+                .andExpect(jsonPath("$.currentProgress").value(0.0))
+                .andExpect(jsonPath("$.progressPercentage").value(0.0))
+                .andExpect(jsonPath("$.remainingAmount").value(5000.0));
     }
 
     @Test
@@ -103,7 +115,7 @@ public class SavingsGoalControllerTest {
         request.setTargetAmount(-100.0); // negative amount
         request.setTargetDate(LocalDate.now().plusMonths(3));
 
-        mockMvc.perform(post("/api/savings-goals")
+        mockMvc.perform(post("/api/goals")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -113,33 +125,33 @@ public class SavingsGoalControllerTest {
 
     @Test
     public void testGetGoals_Empty() throws Exception {
-        mockMvc.perform(get("/api/savings-goals").session(session))
+        mockMvc.perform(get("/api/goals").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.goals", hasSize(0)));
     }
 
     @Test
     public void testGetGoals_WithData() throws Exception {
         // Create a goal first
-        mockMvc.perform(post("/api/savings-goals")
+        mockMvc.perform(post("/api/goals")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(buildGoalRequest("Vacation Fund", 30000.0))))
+                        .content(objectMapper.writeValueAsString(buildGoalRequest("Vacation Fund", 3000.0))))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/savings-goals").session(session))
+        mockMvc.perform(get("/api/goals").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].goalName").value("Vacation Fund"));
+                .andExpect(jsonPath("$.goals", hasSize(1)))
+                .andExpect(jsonPath("$.goals[0].goalName").value("Vacation Fund"));
     }
 
     @Test
-    public void testUpdateGoalProgress() throws Exception {
+    public void testUpdateGoal() throws Exception {
         // Create
-        MvcResult createResult = mockMvc.perform(post("/api/savings-goals")
+        MvcResult createResult = mockMvc.perform(post("/api/goals")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(buildGoalRequest("Car Fund", 100000.0))))
+                        .content(objectMapper.writeValueAsString(buildGoalRequest("Car Fund", 10000.0))))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -148,24 +160,25 @@ public class SavingsGoalControllerTest {
 
         // Update progress
         SavingsGoalUpdateRequest updateRequest = new SavingsGoalUpdateRequest();
-        updateRequest.setCurrentAmount(25000.0);
+        updateRequest.setTargetAmount(8000.0);
+        updateRequest.setTargetDate(LocalDate.now().plusMonths(2));
 
-        mockMvc.perform(put("/api/savings-goals/" + id)
+        mockMvc.perform(put("/api/goals/" + id)
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentAmount").value(25000.0))
-                .andExpect(jsonPath("$.progressPercent").value(25.0));
+                .andExpect(jsonPath("$.targetAmount").value(8000.0))
+                .andExpect(jsonPath("$.remainingAmount").value(8000.0));
     }
 
     @Test
     public void testDeleteGoal_Success() throws Exception {
         // Create
-        MvcResult createResult = mockMvc.perform(post("/api/savings-goals")
+        MvcResult createResult = mockMvc.perform(post("/api/goals")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(buildGoalRequest("Laptop Fund", 80000.0))))
+                        .content(objectMapper.writeValueAsString(buildGoalRequest("Laptop Fund", 8000.0))))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -173,25 +186,25 @@ public class SavingsGoalControllerTest {
                 createResult.getResponse().getContentAsString()).read("$.id");
 
         // Delete
-        mockMvc.perform(delete("/api/savings-goals/" + id).session(session))
+        mockMvc.perform(delete("/api/goals/" + id).session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Savings goal deleted successfully"));
+                .andExpect(jsonPath("$.message").value("Goal deleted successfully"));
 
         // Verify gone
-        mockMvc.perform(get("/api/savings-goals").session(session))
+        mockMvc.perform(get("/api/goals").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.goals", hasSize(0)));
     }
 
     @Test
     public void testDeleteGoal_NotFound() throws Exception {
-        mockMvc.perform(delete("/api/savings-goals/9999").session(session))
+        mockMvc.perform(delete("/api/goals/9999").session(session))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void testUnauthenticatedAccess() throws Exception {
-        mockMvc.perform(get("/api/savings-goals"))
+        mockMvc.perform(get("/api/goals"))
                 .andExpect(status().isUnauthorized());
     }
 }

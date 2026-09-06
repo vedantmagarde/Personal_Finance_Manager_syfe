@@ -1,19 +1,25 @@
 package com.example.personalfinancemanager.dtos;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import java.time.LocalDate;
 
 public class SavingsGoalUpdateRequest {
 
-    @NotNull(message = "Current amount cannot be null")
-    @PositiveOrZero(message = "Current amount must be zero or a positive value")
-    private Double currentAmount;
+    private Double targetAmount;
+    private LocalDate targetDate;
 
-    public Double getCurrentAmount() {
-        return currentAmount;
+    public Double getTargetAmount() {
+        return targetAmount;
     }
 
-    public void setCurrentAmount(Double currentAmount) {
-        this.currentAmount = currentAmount;
+    public void setTargetAmount(Double targetAmount) {
+        this.targetAmount = targetAmount;
+    }
+
+    public LocalDate getTargetDate() {
+        return targetDate;
+    }
+
+    public void setTargetDate(LocalDate targetDate) {
+        this.targetDate = targetDate;
     }
 }

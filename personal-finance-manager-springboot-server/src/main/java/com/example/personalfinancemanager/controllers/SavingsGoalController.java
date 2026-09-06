@@ -1,5 +1,6 @@
 package com.example.personalfinancemanager.controllers;
 
+import com.example.personalfinancemanager.dtos.GoalListResponse;
 import com.example.personalfinancemanager.dtos.SavingsGoalRequest;
 import com.example.personalfinancemanager.dtos.SavingsGoalResponse;
 import com.example.personalfinancemanager.dtos.SavingsGoalUpdateRequest;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/savings-goals")
+@RequestMapping("/api/goals")
 public class SavingsGoalController {
 
     private final SavingsGoalService savingsGoalService;
@@ -28,10 +29,18 @@ public class SavingsGoalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SavingsGoalResponse>> getGoals(
+    public ResponseEntity<GoalListResponse> getGoals(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<SavingsGoalResponse> goals = savingsGoalService.getGoals(userDetails.getUser());
-        return ResponseEntity.ok(goals);
+        return ResponseEntity.ok(new GoalListResponse(goals));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SavingsGoalResponse> getGoal(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        SavingsGoalResponse response = savingsGoalService.getGoal(id, userDetails.getUser());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -43,11 +52,11 @@ public class SavingsGoalController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SavingsGoalResponse> updateGoalProgress(
+    public ResponseEntity<SavingsGoalResponse> updateGoal(
             @PathVariable Integer id,
             @Valid @RequestBody SavingsGoalUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        SavingsGoalResponse response = savingsGoalService.updateGoalProgress(id, request, userDetails.getUser());
+        SavingsGoalResponse response = savingsGoalService.updateGoal(id, request, userDetails.getUser());
         return ResponseEntity.ok(response);
     }
 
@@ -56,6 +65,6 @@ public class SavingsGoalController {
             @PathVariable Integer id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         savingsGoalService.deleteGoal(id, userDetails.getUser());
-        return ResponseEntity.ok(Collections.singletonMap("message", "Savings goal deleted successfully"));
+        return ResponseEntity.ok(Collections.singletonMap("message", "Goal deleted successfully"));
     }
 }

@@ -27,6 +27,9 @@ public class SavingsGoal {
     @Column(name = "target_date")
     private LocalDate targetDate;
 
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
     public Integer getId() {
         return id;
     }
@@ -73,5 +76,13 @@ public class SavingsGoal {
 
     public void setTargetDate(LocalDate targetDate) {
         this.targetDate = targetDate;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
     }
 }

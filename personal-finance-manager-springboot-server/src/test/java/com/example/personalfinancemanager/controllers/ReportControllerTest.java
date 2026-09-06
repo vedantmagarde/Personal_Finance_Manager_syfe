@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class SummaryControllerTest {
+public class ReportControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private UserRepository userRepository;
@@ -43,9 +43,9 @@ public class SummaryControllerTest {
         userRepository.deleteAll();
 
         UserRegistrationRequest reg = new UserRegistrationRequest();
-        reg.setUsername("summary@example.com");
+        reg.setUsername("report@example.com");
         reg.setPassword("securePassword123");
-        reg.setFullName("Summary User");
+        reg.setFullName("Report User");
         reg.setPhoneNumber("8001234567");
 
         mockMvc.perform(post("/api/auth/register")
@@ -54,7 +54,7 @@ public class SummaryControllerTest {
                 .andExpect(status().isCreated());
 
         UserLoginRequest login = new UserLoginRequest();
-        login.setUsername("summary@example.com");
+        login.setUsername("report@example.com");
         login.setPassword("securePassword123");
 
         MvcResult result = mockMvc.perform(post("/api/auth/login")
@@ -66,8 +66,6 @@ public class SummaryControllerTest {
         session = (MockHttpSession) result.getRequest().getSession();
 
         // Seed categories
-        User user = userRepository.findByEmail("summary@example.com").get();
-
         TransactionCategory salaryCategory = new TransactionCategory();
         salaryCategory.setCategoryName("Salary");
         salaryCategory.setType("INCOME");
@@ -84,10 +82,10 @@ public class SummaryControllerTest {
 
         // Create transactions
         TransactionRequest income = new TransactionRequest();
-        income.setAmount(80000.0);
+        income.setAmount(36000.0);
         income.setDate(LocalDate.now());
         income.setCategory("Salary");
-        income.setDescription("Monthly salary");
+        income.setDescription("Salary");
 
         mockMvc.perform(post("/api/transactions")
                         .session(session)
@@ -96,10 +94,10 @@ public class SummaryControllerTest {
                 .andExpect(status().isCreated());
 
         TransactionRequest expense = new TransactionRequest();
-        expense.setAmount(20000.0);
+        expense.setAmount(14400.0);
         expense.setDate(LocalDate.now());
         expense.setCategory("Rent");
-        expense.setDescription("Monthly rent");
+        expense.setDescription("Rent");
 
         mockMvc.perform(post("/api/transactions")
                         .session(session)
@@ -109,45 +107,36 @@ public class SummaryControllerTest {
     }
 
     @Test
-    public void testGetSummary_AllTime() throws Exception {
-        mockMvc.perform(get("/api/summary").session(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalIncome").value(80000.0))
-                .andExpect(jsonPath("$.totalExpenses").value(20000.0))
-                .andExpect(jsonPath("$.netSavings").value(60000.0))
-                .andExpect(jsonPath("$.incomeByCategory.Salary").value(80000.0))
-                .andExpect(jsonPath("$.expensesByCategory.Rent").value(20000.0));
-    }
-
-    @Test
-    public void testGetSummary_ByYearMonth() throws Exception {
+    public void testGetMonthlyReport() throws Exception {
         int year = LocalDate.now().getYear();
         int month = LocalDate.now().getMonthValue();
 
-        mockMvc.perform(get("/api/summary")
-                        .session(session)
-                        .param("year", String.valueOf(year))
-                        .param("month", String.valueOf(month)))
+        mockMvc.perform(get("/api/reports/monthly/" + year + "/" + month)
+                        .session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalIncome").value(80000.0))
-                .andExpect(jsonPath("$.netSavings").value(60000.0));
+                .andExpect(jsonPath("$.month").value(month))
+                .andExpect(jsonPath("$.year").value(year))
+                .andExpect(jsonPath("$.totalIncome.Salary").value(36000.0))
+                .andExpect(jsonPath("$.totalExpenses.Rent").value(14400.0))
+                .andExpect(jsonPath("$.netSavings").value(21600.0));
     }
 
     @Test
-    public void testGetSummary_FutureMonth_ReturnsZero() throws Exception {
-        mockMvc.perform(get("/api/summary")
-                        .session(session)
-                        .param("year", "2099")
-                        .param("month", "1"))
+    public void testGetYearlyReport() throws Exception {
+        int year = LocalDate.now().getYear();
+
+        mockMvc.perform(get("/api/reports/yearly/" + year)
+                        .session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalIncome").value(0.0))
-                .andExpect(jsonPath("$.totalExpenses").value(0.0))
-                .andExpect(jsonPath("$.netSavings").value(0.0));
+                .andExpect(jsonPath("$.year").value(year))
+                .andExpect(jsonPath("$.totalIncome.Salary").value(36000.0))
+                .andExpect(jsonPath("$.totalExpenses.Rent").value(14400.0))
+                .andExpect(jsonPath("$.netSavings").value(21600.0));
     }
 
     @Test
     public void testUnauthenticatedAccess() throws Exception {
-        mockMvc.perform(get("/api/summary"))
+        mockMvc.perform(get("/api/reports/monthly/2024/1"))
                 .andExpect(status().isUnauthorized());
     }
 }

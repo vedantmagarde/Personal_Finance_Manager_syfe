@@ -7,23 +7,34 @@ public class SavingsGoalResponse {
     private Integer id;
     private String goalName;
     private Double targetAmount;
-    private Double currentAmount;
     private LocalDate targetDate;
-    private Double progressPercent; // Computed: (currentAmount / targetAmount) * 100
+    private LocalDate startDate;
+    private Double currentProgress;
+    private Double progressPercentage;
+    private Double remainingAmount;
 
     public SavingsGoalResponse() {
     }
 
     public SavingsGoalResponse(Integer id, String goalName, Double targetAmount,
-                               Double currentAmount, LocalDate targetDate) {
+                               LocalDate targetDate, LocalDate startDate, Double currentProgress) {
         this.id = id;
         this.goalName = goalName;
         this.targetAmount = targetAmount;
-        this.currentAmount = currentAmount;
         this.targetDate = targetDate;
-        this.progressPercent = targetAmount > 0
-                ? Math.min(100.0, (currentAmount / targetAmount) * 100.0)
+        this.startDate = startDate;
+        this.currentProgress = currentProgress != null ? currentProgress : 0.0;
+        
+        this.progressPercentage = targetAmount > 0
+                ? Math.min(100.0, (this.currentProgress / targetAmount) * 100.0)
                 : 0.0;
+        // Format to 2 decimal places manually to match tests if needed, but Double is fine.
+        this.progressPercentage = Math.round(this.progressPercentage * 100.0) / 100.0;
+
+        this.remainingAmount = targetAmount - this.currentProgress;
+        if (this.remainingAmount < 0) {
+            this.remainingAmount = 0.0;
+        }
     }
 
     public Integer getId() {
@@ -50,14 +61,6 @@ public class SavingsGoalResponse {
         this.targetAmount = targetAmount;
     }
 
-    public Double getCurrentAmount() {
-        return currentAmount;
-    }
-
-    public void setCurrentAmount(Double currentAmount) {
-        this.currentAmount = currentAmount;
-    }
-
     public LocalDate getTargetDate() {
         return targetDate;
     }
@@ -66,11 +69,35 @@ public class SavingsGoalResponse {
         this.targetDate = targetDate;
     }
 
-    public Double getProgressPercent() {
-        return progressPercent;
+    public LocalDate getStartDate() {
+        return startDate;
     }
 
-    public void setProgressPercent(Double progressPercent) {
-        this.progressPercent = progressPercent;
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public Double getCurrentProgress() {
+        return currentProgress;
+    }
+
+    public void setCurrentProgress(Double currentProgress) {
+        this.currentProgress = currentProgress;
+    }
+
+    public Double getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(Double progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+
+    public Double getRemainingAmount() {
+        return remainingAmount;
+    }
+
+    public void setRemainingAmount(Double remainingAmount) {
+        this.remainingAmount = remainingAmount;
     }
 }

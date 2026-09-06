@@ -23,6 +23,8 @@ public interface TransactionCategoryRepository extends JpaRepository<Transaction
     // Phase 3: Find a custom category by name belonging to a specific user
     Optional<TransactionCategory> findByCategoryNameAndUserId(String categoryName, Integer userId);
 
+    List<TransactionCategory> findByUserIsNull();
+
     // Phase 3: Find a default (non-custom) category by name
     Optional<TransactionCategory> findByCategoryNameAndIsCustomFalse(String categoryName);
 

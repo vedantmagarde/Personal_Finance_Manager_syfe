@@ -19,6 +19,8 @@ public class SavingsGoalRequest {
     @Future(message = "Target date must be a future date")
     private LocalDate targetDate;
 
+    private LocalDate startDate;
+
     public String getGoalName() {
         return goalName;
     }
@@ -41,5 +43,13 @@ public class SavingsGoalRequest {
 
     public void setTargetDate(LocalDate targetDate) {
         this.targetDate = targetDate;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
     }
 }
