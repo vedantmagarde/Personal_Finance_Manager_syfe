@@ -6,11 +6,14 @@ public class SavingsGoalResponse {
 
     private Integer id;
     private String goalName;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Double targetAmount;
     private LocalDate targetDate;
     private LocalDate startDate;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Double currentProgress;
     private Double progressPercentage;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Double remainingAmount;
 
     public SavingsGoalResponse() {

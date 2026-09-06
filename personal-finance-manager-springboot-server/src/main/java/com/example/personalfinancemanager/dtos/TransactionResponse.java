@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public class TransactionResponse {
 
     private Integer id;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Double amount;
     private LocalDate date;
     private String category;

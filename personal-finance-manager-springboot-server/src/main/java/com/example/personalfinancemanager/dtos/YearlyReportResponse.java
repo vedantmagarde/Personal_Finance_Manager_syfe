@@ -5,8 +5,11 @@ import java.util.Map;
 public class YearlyReportResponse {
 
     private Integer year;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(contentUsing = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Map<String, Double> totalIncome;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(contentUsing = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Map<String, Double> totalExpenses;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.example.personalfinancemanager.config.MoneySerializer.class)
     private Double netSavings;
 
     public YearlyReportResponse() {
